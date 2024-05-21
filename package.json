@@ -1,0 +1,30 @@
+{
+  "name": "audiotranscriber",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.mjs",
+
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron main.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "config": "^3.3.11",
+    "electron-json-storage": "^4.6.0",
+    "electron-store": "^9.0.0",
+    "esm": "^3.2.25",
+    "fs": "^0.0.1-security",
+    "naudiodon": "^2.3.6",
+    "node-audiorecorder": "^3.0.0",
+    "openai": "^4.47.1",
+    "spin.js": "^4.1.1",
+    "wav": "^1.0.2"
+  },
+  "devDependencies": {
+    "electron": "^30.0.6",
+    "electron-rebuild": "^3.2.9"
+  }
+}

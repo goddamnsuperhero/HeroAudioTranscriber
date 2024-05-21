@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <link rel="stylesheet" type="text/css" href="./styles.css">
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <script src="./node_modules/@popperjs/core/dist/umd/popper.min.js"></script>
+    <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <title>Hello World!</title>
+  </head>
+  <body>
+    <h1>Hero Audio Transcriber!</h1>
+    <div id ="loader">   
+      <div class="spinner-border" role="status"></div>
+      <span class="sr-only">Loading...</span>
+    </div>
+
+    <div id="postload"></div>
+    <script src="renderer.js"></script>
+
+  </body>
+</html>
