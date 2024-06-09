@@ -1,2 +1,13 @@
  body { background: #333; color: white; }
 
+ .micPage {
+    height: 100%;
+    width: 25rem;
+    background-color: powderblue;
+  }
+
+  .micContainerRow {
+    position: absolute;
+    overflow-x: scroll;
+    height: 70%;
+}

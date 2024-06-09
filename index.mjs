@@ -38,10 +38,42 @@ const createWindow = () => {
     console.log("done")
     //win.webContents.send('fromMain', audioRecorder.micMap);
 
-    event.sender.send('data-response',audioRecorder.getMicMap()); // Signal the renderer to update the dropdown
+    event.sender.send('data-response',{name:'setMicDropdown',data: audioRecorder.getMicMap()}); // Signal the renderer to update the dropdown
+    await sleep(100)
+    event.sender.send('data-response',{name:'addSavedMics',data: audioRecorder.getSavedMicMap()}); // Signal the renderer to update the dropdown
+
+    //event.sender.send('data-response')
 
   })
   ipcMain.on('get-mic-data', (event) => {
-    console.log(audioRecorder.micMap)
+    //console.log(audioRecorder.micMap)
   })
 
+  ipcMain.on('add-mic', (event) => {
+    console.log("wahoo bing bing")
+
+  })
+  ipcMain.on('send-data', (event,arg) => {
+    console.log("hit Event sendData")
+    if(arg){
+      if (arg.name === "addMic"){
+        console.log("added a mic")
+        console.log(arg.data)
+        var mic = audioRecorder.generateMicTab(arg.data)
+        event.sender.send('data-response',{name:'addNewMic',data: mic}); // Signal the renderer to update the dropdown
+      } else if (arg.name === "clearMics"){
+        audioRecorder.clearMicList()
+      } else if (arg.name === 'updateMicValue'){
+        audioRecorder.spawnMic(arg.data.uuid,arg.data.dropDownMic)
+      } else if (arg.name === 'startMic'){
+        audioRecorder.recordTimedMicAudio(arg.data,5000)
+      } else if (arg.name === 'stopMic'){
+        
+      }
+    }
+
+  })
+
+  async function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}

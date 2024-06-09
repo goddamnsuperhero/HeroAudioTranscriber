@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.mjs",
-
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron main.js"
@@ -19,7 +18,9 @@
     "fs": "^0.0.1-security",
     "naudiodon": "^2.3.6",
     "node-audiorecorder": "^3.0.0",
+    "node-microphone": "^0.1.6",
     "openai": "^4.47.1",
+    "sox-audio": "^0.3.0",
     "spin.js": "^4.1.1",
     "wav": "^1.0.2"
   },
