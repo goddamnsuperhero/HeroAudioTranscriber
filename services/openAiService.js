@@ -26,11 +26,12 @@ async function getChatCompletion(prompt) {
   return completion.choices[0].message.content
 }
 
-async function getTextToSpeech(audioFileLocation) {
+async function getTextFromSpeech(audioFileLocation) {
   const transcription = await openai.audio.transcriptions.create({
     file: fs.createReadStream(audioFileLocation),
     model: "whisper-1",
   });
+  console.log(transcription.text)
 
   return transcription.text
 }
@@ -51,4 +52,4 @@ function makeChatMessageFormat(role,content){
   return {"role": role, "content": content}
 }
 
-module.exports = { getCompletion, getChatCompletion, makeChatMessageFormat,getTextToSpeech,summarizeConversation};
+module.exports = { getCompletion, getChatCompletion, makeChatMessageFormat,getTextFromSpeech,summarizeConversation};

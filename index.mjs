@@ -53,7 +53,7 @@ const createWindow = () => {
     console.log("wahoo bing bing")
 
   })
-  ipcMain.on('send-data', (event,arg) => {
+  ipcMain.on('send-data', async (event,arg) => {
     console.log("hit Event sendData")
     if(arg){
       if (arg.name === "addMic"){
@@ -66,9 +66,10 @@ const createWindow = () => {
       } else if (arg.name === 'updateMicValue'){
         audioRecorder.spawnMic(arg.data.uuid,arg.data.dropDownMic)
       } else if (arg.name === 'startMic'){
-        audioRecorder.recordTimedMicAudio(arg.data,5000)
+        await audioRecorder.startMic(arg.data,5000)
       } else if (arg.name === 'stopMic'){
-        
+        audioRecorder.stopMic(arg.data)
+
       }
     }
 

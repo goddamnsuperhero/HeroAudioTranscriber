@@ -1,10 +1,9 @@
 import portAudio from 'naudiodon';
 import {FileWriter} from 'wav';
-import AudioRecorderLib from 'node-audiorecorder';
 import Store from 'electron-store';
 import PermStore from './store.js';
-import fs from 'fs';
-import Mic from 'node-microphone';
+import openai from './openAiService.js';
+import transcriber from './transcribeService.js';
 
 const store = new Store();
 const permStore = new PermStore({ configName: 'user-preferences' , defaults: {feelings: 'suicide', mood:'glum'}});
@@ -17,6 +16,7 @@ class AudioRecorder {
 
     constructor() {
         this.loadMicData();
+        this.updateTick()
     }
 
     getMicMap() {
@@ -76,229 +76,19 @@ class AudioRecorder {
         }
     }
 
-    async recordAudio(micName, filename, length) {
-        let foundDevice = micNameMap.get(micName);
-        let isOutput = false;
-
-        if (!foundDevice) {
-            for (let device of portAudio.getDevices()) {
-                if (device.name.includes(micName)) {
-                    foundDevice = device;
-                    micNameMap.set(micName, device);
-                    break;
-                }
-            }
-        }
-
-        if (!foundDevice) throw new Error("Microphone not found");
-
-        const deviceID = foundDevice.id;
-        isOutput = foundDevice.maxInputChannels === 0;
-
-        console.log(`using ${foundDevice.name}`);
-        console.log(`using sampleRate: ${foundDevice.defaultSampleRate}`);
-        console.log(isOutput);
-
-        const inputOptions = isOutput
-            ? {
-                  outOptions: {
-                      channelCount: foundDevice.maxOutputChannels,
-                      sampleFormat: portAudio.SampleFormat16Bit,
-                      sampleRate: foundDevice.defaultSampleRate,
-                      deviceId: deviceID,
-                      closeOnError: true,
-                  },
-              }
-            : {
-                  inOptions: {
-                      channelCount: 1,
-                      sampleFormat: portAudio.SampleFormat16Bit,
-                      sampleRate: foundDevice.defaultSampleRate,
-                      deviceId: deviceID,
-                      closeOnError: true,
-                  },
-              };
-
-        const ai = new portAudio.AudioIO(inputOptions);
-
-        const outputFileStream = new FileWriter(`./${filename}.wav`, {
-            sampleRate: foundDevice.defaultSampleRate,
-            channels: 1,
-        });
-
-        try {
-            ai.pipe(outputFileStream);
-            ai.start();
-            console.log("started recording");
-
-            await this.sleep(length);
-            ai.quit();
-            console.log("finished recording");
-        } catch (error) {
-            console.error("Error recording audio: " + error);
-        }
-
-        return `./${filename}.wav`;
-    }
-
-    async recordAudioStart(micName, filename) {
-        let foundDevice = micNameMap.get(micName);
-        let isOutput = false;
-
-        if (!foundDevice) {
-            for (let device of portAudio.getDevices()) {
-                if (device.name.includes(micName)) {
-                    foundDevice = device;
-                    isOutput = device.maxInputChannels === 0;
-                    micNameMap.set(micName, device);
-                    break;
-                }
-            }
-        }
-
-        if (!foundDevice) throw new Error("Microphone not found");
-
-        console.log(`DEBUG: using ${foundDevice.name}`);
-        console.log(`DEBUG: using sampleRate: ${foundDevice.defaultSampleRate}`);
-        console.log(isOutput);
-
-        recordingInput = new portAudio.AudioIO(
-            isOutput
-                ? {
-                      outOptions: {
-                          channelCount: foundDevice.maxOutputChannels,
-                          sampleFormat: portAudio.SampleFormat16Bit,
-                          sampleRate: foundDevice.defaultSampleRate,
-                          deviceId: foundDevice.id,
-                          closeOnError: true,
-                      },
-                  }
-                : {
-                      inOptions: {
-                          channelCount: 1,
-                          sampleFormat: portAudio.SampleFormat16Bit,
-                          sampleRate: foundDevice.defaultSampleRate,
-                          deviceId: foundDevice.id,
-                          closeOnError: true,
-                      },
-                  }
-        );
-
-        const outputFileStream = new FileWriter(`./${filename}.wav`, {
-            sampleRate: foundDevice.defaultSampleRate,
-            channels: 1,
-        });
-
-        recordingInput.pipe(outputFileStream);
-        recordingInput.start();
-        console.log("DEBUG: started recording");
-
-        isRecord = true;
-        recordingFilename = filename;
-    }
-
-    async recordAudioEnd() {
-        recordingInput.quit();
-        console.log("finished recording");
-
-        return `./${recordingFilename}.wav`;
-    }
-
-    async recordAudioFromMic(micName, filename, length) {
-        let foundDevice;
-        const devices = portAudio.getDevices();
-        let isOutput = false;
-
-        for (let device of devices) {
-            if (device.name.includes(micName)) {
-                foundDevice = device;
-                isOutput = device.maxInputChannels === 0;
-            }
-        }
-
-        if (!foundDevice) throw new Error("Microphone not found");
-
-        const options = {
-            program: `sox`,
-            device: `hw:0,${foundDevice.id}`,
-            bits: 16,
-            channels: 1,
-            encoding: `signed-integer`,
-            format: `S16_LE`,
-            rate: foundDevice.defaultSampleRate,
-            type: `wav`,
-            silence: 2,
-            thresholdStart: 0.5,
-            thresholdStop: 0.5,
-            keepSilence: true,
-        };
-
-        const logger = console;
-        const audioRecorder = new AudioRecorderLib(options, logger);
-
-        const outputFileStream = new FileWriter(`./${filename}.wav`, {
-            sampleRate: foundDevice.defaultSampleRate,
-            channels: numChannels,
-        });
-
-        audioRecorder.on('error', console.warn);
-        audioRecorder.on('end', () => {
-            console.warn('Recording ended.');
-        });
-
-        audioRecorder.start().stream().pipe(outputFileStream);
-        console.log("started recording");
-
-        await this.sleep(length);
-        audioRecorder.stop();
-        console.log("finished recording");
-
-        return `./${filename}.wav`;
-    }
-
     sleep(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
 
     spawnMic(myUUID,micName) {
-        let foundDevice = micNameMap.get(micName);
-        console.log("")
-
-            const devices = portAudio.getDevices();
-
-            const options = {
-                program: `sox`,
-                device: `hw:0,${foundDevice.id}`,
-                bits: 16,
-                channels: 1,
-                encoding: `signed-integer`,
-                format: `S16_LE`,
-                rate: foundDevice.defaultSampleRate,
-                type: `wav`,
-                silence: 2,
-                thresholdStart: 0.5,
-                thresholdStop: 0.5,
-                keepSilence: true,
-            };
-
-            const logger = console;
-            const audioRecorder = new AudioRecorderLib(options, logger);
-
-            audioRecorder.on('error', console.warn);
-            audioRecorder.on('end', () => {
-                console.warn('Recording ended.');
-            });
-
-            var mic = userMicList.get(`mic-${myUUID}`)
-            mic.micName = micName
-            audioRecorderList.set(myUUID,audioRecorder)
-            console.log(`${myUUID} is the mic dude`)
-            userMicList.set(`mic-${myUUID}`,mic)
-            permStore.set('userMicList', Array.from(userMicList.entries())); 
-            console.log(`Spawned mic for ${micName}`)
-
-            //console.log(mic)
+        var mic = userMicList.get(`mic-${myUUID}`)
+        mic.micName = micName
+        audioRecorderList.set(myUUID,{recording:false,rollover:1})
+        console.log(`${myUUID} is the mic dude`)
+        userMicList.set(`mic-${myUUID}`,mic)
+        permStore.set('userMicList', Array.from(userMicList.entries())); 
+        console.log(`Spawned mic for ${micName}`)
     }
 
     generateMicTab(myUUID){
@@ -310,7 +100,18 @@ class AudioRecorder {
         return micData
     }
 
-    async recordTimedMicAudio(uuid, length) {
+    async startMic(uuid,length){
+        var recordingData =audioRecorderList.get(uuid)
+        if(recordingData && !recordingData.recording){
+            audioRecorderList.get(uuid).recording =true
+            this.recordTimedMicAudio(uuid,length,1)
+        }
+    }
+
+    stopMic(uuid){
+        audioRecorderList.get(uuid).recording = false
+    }
+    async recordTimedMicAudio(uuid, length, rollover) {
 
         var mic = userMicList.get(`mic-${uuid}`)
         let foundDevice = micNameMap.get(mic.micName);
@@ -345,15 +146,18 @@ class AudioRecorder {
 
         const ai = new portAudio.AudioIO(inputOptions);
 
-        const outputFileStream = new FileWriter(`./${uuid}.wav`, {
+        var fileLocation = `./recordings/${uuid}-${rollover}.wav`
+        const outputFileStream = new FileWriter(fileLocation, {
             sampleRate: foundDevice.defaultSampleRate,
             channels: 1,
         });
 
+        var timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')
+        
         try {
             ai.pipe(outputFileStream);
             ai.start();
-            console.log("started recording");
+            console.log(`started recording ${uuid}-${rollover}.wav`);
 
             await this.sleep(length);
             ai.quit();
@@ -361,22 +165,76 @@ class AudioRecorder {
         } catch (error) {
             console.error("Error recording audio: " + error);
         }
-
+        this.rolloverRecord(uuid,length)
+        var transcribedText = await openai.getTextFromSpeech(fileLocation)
+        transcriber.appendTextToLog(timestamp,transcribedText,"mic1")
         return `./${uuid}.wav`;
     }
 
-    //     let audioRecorder = new AudioRecorderLib(options, console);
+    rolloverRecord(uuid,length){
+        var recordingData =audioRecorderList.get(uuid)
+        if(recordingData.recording){
+            var newwavID = ((recordingData.rollover )%2) +1 
+            audioRecorderList.get(uuid).rollover = newwavID
+            this.recordTimedMicAudio(uuid,length,audioRecorderList.get(uuid).rollover)
+        }
+    }
 
-    //     // Create a write stream to write out to a raw audio file.
-    //     let fileStream = fs.createWriteStream('output.wav', { encoding: 'binary' });
-        
-    //     // Start and stop recording after 3 seconds.
-    //     audioRecorder.start().stream().pipe(fileStream);
-    //     setTimeout(() => {
-    //       audioRecorder.stop();
-    //     }, 10000);
-    //     return `./${uuid}.wav`;
-    // }
+    generateMicArray(uuid) {
+
+        var mic = userMicList.get(`mic-${uuid}`)
+        let foundDevice = micNameMap.get(mic.micName);
+
+        if (!foundDevice) throw new Error("Microphone not found");
+
+        var isOutput = false
+
+        console.log(`using ${foundDevice.name}`);
+        console.log(`using sampleRate: ${foundDevice.defaultSampleRate}`);
+        console.log(false);
+
+        const inputOptions = isOutput
+            ? {
+                  outOptions: {
+                      channelCount: foundDevice.maxOutputChannels,
+                      sampleFormat: portAudio.SampleFormat16Bit,
+                      sampleRate: foundDevice.defaultSampleRate,
+                      deviceId: foundDevice.id,
+                      closeOnError: true,
+                  },
+              }
+            : {
+                  inOptions: {
+                      channelCount: 1,
+                      sampleFormat: portAudio.SampleFormat16Bit,
+                      sampleRate: foundDevice.defaultSampleRate,
+                      deviceId: foundDevice.id,
+                      closeOnError: true,
+                  },
+              };
+
+        var ai = new portAudio.AudioIO(inputOptions);
+        //var ai2 = new portAudio.AudioIO(inputOptions);
+        var ai2= ""
+
+        const outputFileStream = new FileWriter(`./${uuid}-1.wav`, {
+            sampleRate: foundDevice.defaultSampleRate,
+            channels: 1,
+        });
+        const outputFileStream2 = new FileWriter(`./${uuid}-2.wav`, {
+            sampleRate: foundDevice.defaultSampleRate,
+            channels: 1,
+        });
+
+        var micArray = [{mic: ai, output:outputFileStream}, {mic: ai2, output:outputFileStream2}]
+        return micArray;
+    }
+
+    async updateTick(){
+        //console.log("tick")
+        await this.sleep(500);
+        this.updateTick();
+    }
 }
 
 
