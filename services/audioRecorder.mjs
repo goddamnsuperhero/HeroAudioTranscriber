@@ -1,16 +1,9 @@
 import portAudio from 'naudiodon';
 import {FileWriter} from 'wav';
-import Store from 'electron-store';
 import PermStore from './store.js';
 import openAiService from './openAiService.mjs';
 import transcriber from './transcribeService.js';
 
-import ffmpeg from 'fluent-ffmpeg';
-import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
-
-ffmpeg.setFfmpegPath(ffmpegInstaller.path);
-
-const store = new Store();
 const permStore = new PermStore({ configName: 'user-preferences' , defaults: {'recordingLength': 5000}});
 
 const micNameMap = new Map();
@@ -28,15 +21,19 @@ class AudioRecorder {
         //this.updateTick()
     }
 
+    // gets the list of mic names from the system
     getMicMap() {
         return micNameMap
     }
+    // gets the list of saved mic data
     getSavedMicMap() {
         return userMicList
     }
+    // gets the recording length
     getRecordingLength() {
         return recordingLength
     }
+    // loads the mic map if it doesn't already exist
     async loadMicMapIfEmpty() {
         if (this.isMicMapEmpty()) {
             console.log("gotta load them mics");
@@ -46,6 +43,7 @@ class AudioRecorder {
         }
     }
 
+    // refresh system mics list
     async refreshMicList(){
         micNameMap.clear();
         permStore.set('micNameMap', Array.from(userMicList.entries())); 
@@ -96,6 +94,7 @@ class AudioRecorder {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
+    // updating recording length in seconds
     setRecordingLength(newLength){
         recordingLength = newLength*1000
         permStore.set('recordingLength', recordingLength);
@@ -114,6 +113,7 @@ class AudioRecorder {
         console.log(`Spawned mic for ${micName}`)
     }
 
+    // creates a mic using the data
     updateMicData(data) {
         if(data.uuid) {
             console.log(data)
@@ -124,12 +124,9 @@ class AudioRecorder {
             }
             if(data.logname){
                 mic.logname = data.logname
-                console.log(data.logname)
-
             }
             if(data.micEnabled != null){
                 mic.micEnabled = data.micEnabled
-                console.log(data.micEnabled)
             }
             userMicList.set(`mic-${uuid}`,mic)
             permStore.set('userMicList', Array.from(userMicList.entries())); 
@@ -162,6 +159,7 @@ class AudioRecorder {
         return micData
     }
 
+    // starts a specific mic with the recording length
     async startMic(uuid,length){
         var recordingData =audioRecorderList.get(uuid)
         if(recordingData && !recordingData.recording){
@@ -170,6 +168,7 @@ class AudioRecorder {
         }
     }
 
+    //starts all the mics that are enabled at once
     async startMics(length){
         audioRecorderList.forEach((value, key) => {
             var mic = userMicList.get(`mic-${key}`)
@@ -177,10 +176,12 @@ class AudioRecorder {
         })
     }
 
+    // stops a specific mic once its done recording
     stopMic(uuid){
         audioRecorderList.get(uuid).recording = false
     }
 
+    // stops all mics once they are done recording
     stopMics(){
         audioRecorderList.forEach((value, key) => {
             console.log(`stopping key: ${key}`)
@@ -188,6 +189,7 @@ class AudioRecorder {
         })
     }
 
+    // records a mic, saves to file, and transcribes
     async recordTimedMicAudio(uuid, length, rollover) {
 
         var mic = userMicList.get(`mic-${uuid}`)
@@ -232,6 +234,7 @@ class AudioRecorder {
         return `./${uuid}.wav`;
     }
 
+    // updates a mic's rollover and start recording
     rolloverRecord(uuid,length){
         var recordingData =audioRecorderList.get(uuid)
         if(recordingData.recording){

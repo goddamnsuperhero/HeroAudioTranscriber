@@ -1,6 +1,7 @@
 var fs = require('fs');
 const logFile = "./transcription.txt"
 
+// adds transcription to transcription log
 function appendTextToLog(timestamp,text,user) {
   //generate file if it doesnt exist
   fs.stat(logFile, function(err, stat) {
