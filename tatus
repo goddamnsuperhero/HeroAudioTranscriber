@@ -1,0 +1,23 @@
+[33mcommit 2ddfd774e9027dabf6d22c81b971172fe9fdc183[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: gdsHero <rwwachow@gmail.com>
+Date:   Sun Jun 9 20:26:09 2024 -0400
+
+    Removed recordings/transcription file.
+    mics now rollover record.
+    Stop button works.
+    Transcribes text to audio file.
+
+[33mcommit daa60ffeed3398dae55657badcdcb65ab4edc73b[m
+Author: gdsHero <rwwachow@gmail.com>
+Date:   Sat Jun 8 21:22:50 2024 -0400
+
+    Mics now save
+    Mics can record
+    Save data can be cleared
+
+[33mcommit 454d5c9b5f8bef9546d280a23d703f1d0df3b82a[m
+Author: gdsHero <rwwachow@gmail.com>
+Date:   Tue May 21 17:34:48 2024 -0400
+
+    initial commit
+    added base electron app, with mic finding
