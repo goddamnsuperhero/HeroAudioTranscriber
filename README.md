@@ -1,6 +1,7 @@
 <div align="center">
   <h1 align="center">Hero Audio Transcriber</h1>
   <h3>Transcribe audio from multiple mics</h3>
+</div>
 
 ## Demo
 This shows how you can use one or more mics, and it will then transcribe that audio to text
