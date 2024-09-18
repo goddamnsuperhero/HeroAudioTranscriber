@@ -1,4 +1,4 @@
-  document.addEventListener('DOMContentLoaded', () => {
+ document.addEventListener('DOMContentLoaded', () => {
       // Request data from the main process when the page is loaded
       window.electronAPI.documentReady()
 
@@ -12,3 +12,4 @@
     initPostLoad()
     window.MyApp.globalData.micMap = data.data;
   });
+

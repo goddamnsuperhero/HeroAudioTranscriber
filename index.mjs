@@ -4,11 +4,15 @@ import path from 'node:path'
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import OpenAIService from "./services/openAiService.mjs"
+import transcribeService from "./services/transcribeService.mjs"
+import WhisperService from "./services/whisperService.mjs"
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const audioRecorder = new AudioRecorder();
 let openai = new OpenAIService()
+let whisper = new WhisperService()
+
 let win;
 const createWindow = () => {
     win = new BrowserWindow({
@@ -19,12 +23,16 @@ const createWindow = () => {
         contextIsolation: true,
         preload: path.join(__dirname, 'preload.js')
       }
+      
     })
     win.loadFile('index.html')
+    win.setMenuBarVisibility(false)
+
  }
 
   app.whenReady().then(() => {
     createWindow()
+
   })
 
   app.on('window-all-closed', () => {
@@ -42,9 +50,22 @@ const createWindow = () => {
     await sleep(100)
     event.sender.send('data-response',{name:'addSavedMics',data: audioRecorder.getSavedMicMap()}); // Signal the renderer to update the dropdown
     event.sender.send('data-response',{name:'sendLength',data: audioRecorder.getRecordingLength()/1000}); // Signal the renderer to update the dropdown
+    event.sender.send('data-response',{name:'sendLogFileLocation',data: transcribeService.getLogLocation()}); // Signal the renderer to update the dropdown
+    console.log(audioRecorder.getUsingOpenAI())
+    event.sender.send('data-response',{name:'useOpenAI', data:audioRecorder.getUsingOpenAI()}); 
+    event.sender.send('data-response',{name:'modelOptions', data:audioRecorder.getUsingOpenAI()}); 
+    //event.sender.send('data-response',{name:'useOpenAI', data:audioRecorder.getUsingOpenAI()}); 
 
-    //event.sender.send('data-response')
-    
+    if(transcribeService.isLogLocationValid(transcribeService.getLogLocation())){
+      event.sender.send('data-response',{name:'goodLogLocation'}); 
+      var logData = await transcribeService.loadfileText()
+      event.sender.send('data-response',{name:'sendLogData', data:logData}); 
+
+    } else {
+      event.sender.send('data-response',{name:'badLogLocation'}); 
+    }
+    transcribeService.loadfileText()
+        
     await openai.testKey().then(() => {
       event.sender.send('data-response',{name:'goodAPIKey'}); 
       console.log("saved api key success")
@@ -54,14 +75,7 @@ const createWindow = () => {
 
       })
   })
-  // ipcMain.on('get-mic-data', (event) => {
-  //   //console.log(audioRecorder.micMap)
-  // })
 
-  // ipcMain.on('add-mic', (event) => {
-  //   console.log("wahoo bing bing")
-
-  // })
   ipcMain.on('send-data', async (event,arg) => {
     console.log(`hit Event sendData ${arg.name}`)
     if(arg){
@@ -73,9 +87,6 @@ const createWindow = () => {
       } else if (arg.name === "refreshDropdown"){
         await audioRecorder.refreshMicList()
         event.sender.send('data-response',{name:'setMicDropdown',data: audioRecorder.getMicMap()}); // Signal the renderer to update the dropdown
-
-      // } else if (arg.name === 'updateMicValue'){
-      //   audioRecorder.spawnMic(arg.data.uuid,arg.data.micname)
       } else if (arg.name === 'updateMic'){
         audioRecorder.updateMicData(arg.data)
       } else if (arg.name === 'deleteMic'){
@@ -101,11 +112,51 @@ const createWindow = () => {
           console.log(error)
 
         })
+      } else if (arg.name === 'updateLogLocation'){
+        var result = await transcribeService.updateLogFileLocation(arg.data.key)
+        if(result){
+          event.sender.send('data-response',{name:'goodLogLocation'}); 
+          var logData = await transcribeService.loadfileText()
+          event.sender.send('data-response',{name:'sendLogData', data:logData}); 
+          console.log("success")
+        } else {
+          event.sender.send('data-response',{name:'badLogLocation'}); 
+          var logData = await transcribeService.loadfileText()
+          event.sender.send('data-response',{name:'sendLogData', data:["No text found"]}); 
+          console.log("Fail")
+        }
+      } else if (arg.name === 'refreshLog'){
+        var result = await transcribeService.updateLogFileLocation(transcribeService.getLogLocation())
+        if(result){
+          var logData = await transcribeService.loadfileText()
+          event.sender.send('data-response',{name:'sendLogData', data:logData}); 
+        } else {
+          var logData = await transcribeService.loadfileText()
+          event.sender.send('data-response',{name:'sendLogData', data:["No text found"]}); 
+        }
+      } else if (arg.name === 'clearLog'){
+        var result = await transcribeService.clearLog()
+        event.sender.send('data-response',{name:'sendLogData', data:[""]}); 
+
+      } else if (arg.name === 'event-passback'){
+        var result = await transcribeService.clearLog()
+        event.sender.send('data-response',arg.data); 
+      } 
+      else if (arg.name === 'useOpenAi'){
+        var result = await audioRecorder.setUsingOpenAI(arg.data.usOpenAI)
+      }
+      else if (arg.name === 'updateWhisperOptions'){
+        var result = await whisper.setOptions(arg.data.key)
       } 
     }
 
   })
+  transcribeService.on("passback", (data) => {
+    console.log("TrasncribePassback:"+data)
+    win.webContents.send('data-response', data)
+  });
 
   async function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
+

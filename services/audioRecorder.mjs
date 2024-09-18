@@ -2,9 +2,10 @@ import portAudio from 'naudiodon';
 import {FileWriter} from 'wav';
 import PermStore from './store.js';
 import openAiService from './openAiService.mjs';
-import transcriber from './transcribeService.js';
+import transcriber from "./transcribeService.mjs"
+import WhisperService from './whisperService.mjs';
 
-const permStore = new PermStore({ configName: 'user-preferences' , defaults: {'recordingLength': 5000}});
+const permStore = new PermStore({ configName: 'user-preferences' , defaults: {'recordingLength': 5000, 'useOpenAI': true}});
 
 const micNameMap = new Map();
 const userMicList = new Map();
@@ -12,12 +13,15 @@ const audioRecorderList = new Map();
 var recordingLength = 5000;
 
 var openai = new openAiService()
-
+var whisper = new WhisperService()
+var useOpenAI = false;
 class AudioRecorder {
 
     constructor() {
         this.loadMicData();
         if(permStore.has('recordingLength')) recordingLength = permStore.get('recordingLength');
+        if(permStore.has('useOpenAI')) useOpenAI = permStore.get('useOpenAI');
+
         //this.updateTick()
     }
 
@@ -188,6 +192,15 @@ class AudioRecorder {
             this.stopMic(key)
         })
     }
+    // stops all mics once they are done recording
+    setUsingOpenAI(useOpenAi){
+        permStore.set('useOpenAI',useOpenAi); 
+        console.log(permStore.get('useOpenAI'))
+
+    }
+
+    getUsingOpenAI(){ return permStore.get('useOpenAI')}
+
 
     // records a mic, saves to file, and transcribes
     async recordTimedMicAudio(uuid, length, rollover) {
@@ -229,7 +242,13 @@ class AudioRecorder {
             console.error("Error recording audio: " + error);
         }
         this.rolloverRecord(uuid,length)
-        var transcribedText = await openai.getTextFromSpeech(fileLocation)
+        
+        var transcribedText =""
+        if(useOpenAI){
+            transcribedText = await openai.getTextFromSpeech(fileLocation)
+        } else {
+            transcribedText = await whisper.getTextFromSpeech(fileLocation) 
+        }
         transcriber.appendTextToLog(timestamp,transcribedText,mic.logname)
         return `./${uuid}.wav`;
     }

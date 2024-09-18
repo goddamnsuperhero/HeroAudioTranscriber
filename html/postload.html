@@ -1,7 +1,9 @@
     <div class="postload">
       <button type="button" id="spawnMic" class="btn btn-primary">Add Mic</button>
       <button type="button" id="refreshDropdown" class="btn btn-primary">Reload Mic List</button> 
-      <button type="button"  id="myButton" class="btn btn-primary settingsButton">Settings</button> <br>
+      <button type="button"  id="settingsButton" class="btn btn-primary settingsButton">Settings</button> 
+      <button type="button"  id="LogButton" class="btn btn-primary settingsButton">Log Preview</button>
+      <br>
 
       <div class="container mic-group" id="micContainer">
         <div class="row flex-nowrap" id="micContainerRow"></div>
@@ -14,18 +16,26 @@
       </div>
     </div>
     <div id="myPopup" class="popup">
-      <div class="popup-content">
-        <button type="button"  id="closePopup" class="btn btn-primary settingsButton">
-          Close
-        </button><br>
-        <h1 >
-            Settings
-        </h1>
-        <label for="api-key">OpenAI API Key:</label>
-        <input type="password" id="api-key" name="api-key" value="96201826032508189995845237275351"><span id="apigood" class="badge-success" hidden>&#10003;</span><span  id="apibad" class="badge-fail" >X</span><br>
-        <label for="rLength">RecordingLength:</label>
-        <input type="number" id="rLength" name="rLength" min="0" max="60"><br>
+      <div class="popup-content" id="settingsMenu">
       </div>
   </div>
+  <div id="myPopupTextPreview" class="popup">
+    <div class="popup-content">
+      <button type="button"  id="closeTextPreviewPopup" class="btn btn-primary settingsButton">
+        Close
+      </button>
+      <button type="button"  id="refreshLog" class="btn btn-primary settingsButton">
+        Refresh Log
+      </button>
+      <button type="button"  id="clearLog" class="btn btn-primary settingsButton">
+        Clear Log
+      </button><br>
+      <h1 >
+          TextPreview
+      </h1>
+      <div id="TextPreview" style="width:500px;height:200px;line-height:1em;overflow:scroll;padding:5px;">
+        </div>
+    </div>
+</div>
 
     <script type="module" src="./scripts/micPage.js" ></script>

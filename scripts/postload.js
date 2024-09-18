@@ -3,7 +3,13 @@
 var isRecording = false;
 var length = 5;
 
-function initPostLoad(){
+async function initPostLoad(){
+
+    var settingsMenu =  document.querySelector(`#settingsMenu`);
+    await GlobalFuncs.fetchHtmlAsText('./html/settingsMenu.html', settingsMenu);
+    initSettingsPage()
+
+
     // init add mic button
     var button = document.getElementById('spawnMic');
     button.addEventListener('click', async function() {
@@ -32,45 +38,75 @@ function initPostLoad(){
         isRecording = !isRecording;
         if(isRecording) disableAllMicElements(isRecording)
   });
-  // init length field
-  var lengthField =  document.querySelector(`#rLength`);
-  lengthField.addEventListener("blur", function(event) {
-    length =  lengthField.value
-    window.electronAPI.sendData({name:'updateLength',data:{length:length}})
-  });
-  lengthField.value = length
-  // init settings popup menu
-  var myButton =  document.querySelector(`#myButton`);
-  var closePopup =  document.querySelector(`#closePopup`);
-  myButton.addEventListener(
-    "click",
-    function () {
-        myPopup.classList.add("show");
-    }
-    );
-    closePopup.addEventListener(
+//   var myButton =  document.querySelector(`#myButton`);
+//   var closePopup =  document.querySelector(`#closePopup`);
+//   myButton.addEventListener(
+//     "click",
+//     function () {
+//         myPopup.classList.add("show");
+//     }
+//     );
+//     closePopup.addEventListener(
+//         "click",
+//         function () {
+//             myPopup.classList.remove( 
+//                 "show"
+//             );
+//         }
+//     );
+//     window.addEventListener(
+//         "click",
+//         function (event) {
+//             if (event.target == myPopup) {
+//                 myPopup.classList.remove(
+//                     "show"
+//                 );
+//             }
+//         }
+//     );
+    var LogPreviewButton =  document.querySelector(`#LogButton`);
+    var closeLogPreviewPopup =  document.querySelector(`#closeTextPreviewPopup`);
+    var RefreshLogButton =  document.querySelector(`#refreshLog`);
+    var ClearLog =  document.querySelector(`#clearLog`);
+
+    LogPreviewButton.addEventListener(
+      "click",
+      function () {
+        myPopupTextPreview.classList.add("show");
+      }
+      );
+      closeLogPreviewPopup.addEventListener(
+          "click",
+          function () {
+            myPopupTextPreview.classList.remove( 
+                  "show"
+              );
+          }
+      );
+      window.addEventListener(
+          "click",
+          function (event) {
+              if (event.target == myPopup) {
+                myPopupTextPreview.classList.remove(
+                      "show"
+                  );
+              }
+          }
+      );
+      RefreshLogButton.addEventListener(
         "click",
         function () {
-            myPopup.classList.remove(
-                "show"
-            );
+            window.electronAPI.sendData({name:'refreshLog'})
+            
+
         }
     );
-    window.addEventListener(
+    ClearLog.addEventListener(
         "click",
-        function (event) {
-            if (event.target == myPopup) {
-                myPopup.classList.remove(
-                    "show"
-                );
-            }
+        function () {
+            window.electronAPI.sendData({name:'clearLog'})
         }
     );
-    // init api field
-    var apikeyfield =  document.querySelector(`#api-key`);
-    apikeyfield.addEventListener("blur", function(event) {
-      window.electronAPI.sendData({name:'updateApiKey',data:{key:apikeyfield.value}})
-    });
 }
 
   window.electronAPI.onDataReceived(async (event,data) => {
@@ -101,21 +137,27 @@ function initPostLoad(){
             startButton.classList.remove("btn-danger");
             localStorage.setItem('isRecording',false);
             document.querySelector(`#stopWaitLoader`).hidden = true
-
-        } else if (data.name =="sendLength"){
-            // length data gotten from save
-            var lengthField =  document.querySelector(`#rLength`);
-            lengthField.value = data.data
-        } else if (data.name =="goodAPIKey"){
-            // got word that api key is valid
-            document.querySelector(`#apigood`).hidden= false;
-            document.querySelector(`#apibad`).hidden=true;
-            disableRecordingButton(false)
-        } else if (data.name =="badAPIKey"){
+        } else if (data.name =="sendLogData"){
             // got word that api key is invalid
-            document.querySelector(`#apigood`).hidden= true;
-            document.querySelector(`#apibad`).hidden=false;
-            disableRecordingButton(true)
+            var textLines = data.data
+            var textPreview = document.querySelector(`#TextPreview`)
+            textPreview.innerHTML =""
+            for( textLine in textLines){
+                var para = document.createElement("p");
+                var node = document.createTextNode(textLines[textLine]);
+                para.appendChild(node);
+                textPreview.appendChild(para);
+            }
+
+        }
+        else if (data.name =="sendLogDataAppend"){
+            // got word that api key is invalid
+            var textLines = data.data
+            var textPreview = document.querySelector(`#TextPreview`)
+            var para = document.createElement("p");
+            var node = document.createTextNode(textLines);
+            para.appendChild(node);
+            textPreview.appendChild(para);
         }
     }
   });

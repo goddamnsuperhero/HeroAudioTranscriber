@@ -1,33 +1,55 @@
 {
-  "name": "audiotranscriber",
+  "name": "heroaudiotranscriber",
   "version": "1.0.0",
-  "description": "",
+  "description": "Audio Transcriber from multiple microphones using OpenAI's Whisper to speech to text",
   "main": "index.mjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron main.js"
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
   },
-  "author": "",
+  "build": {
+    "appId": "your.id",
+    "mac": {
+      "category": "your.app.category.type"
+    }
+  },
+  "author": "Goddamn Superhero",
   "license": "ISC",
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "bootstrap": "^5.3.3",
     "config": "^3.3.11",
     "electron-json-storage": "^4.6.0",
-    "electron-store": "^9.0.0",
+    "electron-squirrel-startup": "^1.0.1",
     "esm": "^3.2.25",
     "fluent-ffmpeg": "^2.1.3",
     "fs": "^0.0.1-security",
+    "make": "^0.8.1",
     "naudiodon": "^2.3.6",
     "node-audiorecorder": "^3.0.0",
     "node-microphone": "^0.1.6",
+    "nodejs-whisper": "^0.1.18",
     "openai": "^4.47.1",
     "sox-audio": "^0.3.0",
     "spin.js": "^4.1.1",
-    "wav": "^1.0.2"
+    "wav": "^1.0.2",
+    "whisper-node": "^1.1.1"
   },
   "devDependencies": {
-    "electron": "^30.0.6",
+    "@electron-forge/cli": "^7.4.0",
+    "@electron-forge/maker-deb": "^7.4.0",
+    "@electron-forge/maker-rpm": "^7.4.0",
+    "@electron-forge/maker-squirrel": "^7.4.0",
+    "@electron-forge/maker-zip": "^7.4.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.4.0",
+    "@electron-forge/plugin-fuses": "^7.4.0",
+    "@electron/fuses": "^1.8.0",
+    "electron": "^31.1.0",
+    "electron-builder": "^24.13.3",
     "electron-rebuild": "^3.2.9"
   }
 }
