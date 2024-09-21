@@ -1,12 +1,12 @@
-import portAudio from 'naudiodon';
+import portAudio from 'naudiodon'
 import {FileWriter} from 'wav';
 import PermStore from './store.js';
 import openAiService from './openAiService.mjs';
 import transcriber from "./transcribeService.mjs"
 import WhisperService from './whisperService.mjs';
-
+import log from 'electron-log/main.js';
+import fs from 'fs'
 const permStore = new PermStore({ configName: 'user-preferences' , defaults: {'recordingLength': 5000, 'useOpenAI': true}});
-
 const micNameMap = new Map();
 const userMicList = new Map();
 const audioRecorderList = new Map();
@@ -14,6 +14,7 @@ var recordingLength = 5000;
 
 var openai = new openAiService()
 var whisper = new WhisperService()
+
 var useOpenAI = false;
 class AudioRecorder {
 
@@ -36,6 +37,10 @@ class AudioRecorder {
     // gets the recording length
     getRecordingLength() {
         return recordingLength
+    }
+    // gets the recording length
+    getWhisper() {
+        return whisper
     }
     // loads the mic map if it doesn't already exist
     async loadMicMapIfEmpty() {
@@ -204,52 +209,78 @@ class AudioRecorder {
 
     // records a mic, saves to file, and transcribes
     async recordTimedMicAudio(uuid, length, rollover) {
+        try{
+            var mic = userMicList.get(`mic-${uuid}`)
+            let foundDevice = micNameMap.get(mic.micName);
 
-        var mic = userMicList.get(`mic-${uuid}`)
-        let foundDevice = micNameMap.get(mic.micName);
+            if (!foundDevice) throw new Error("Microphone not found");
 
-        if (!foundDevice) throw new Error("Microphone not found");
+            const inputOptions =  {
+                    inOptions: {
+                        channelCount: 1,
+                        sampleFormat: portAudio.SampleFormat16Bit,
+                        sampleRate: foundDevice.defaultSampleRate,
+                        deviceId: foundDevice.id,
+                        closeOnError: true,
+                    },
+                };
 
-        const inputOptions =  {
-                  inOptions: {
-                      channelCount: 1,
-                      sampleFormat: portAudio.SampleFormat16Bit,
-                      sampleRate: foundDevice.defaultSampleRate,
-                      deviceId: foundDevice.id,
-                      closeOnError: true,
-                  },
-              };
+            const ai = new portAudio.AudioIO(inputOptions);
+            if (!fs.existsSync("./recordings")) {
+                fs.mkdirSync("./recordings");
+            }
+            var fileLocation = `./recordings/${uuid}-${rollover}.wav`
+            const outputFileStream = new FileWriter(fileLocation, {
+                sampleRate: foundDevice.defaultSampleRate,
+                channels: 1,
+            });
 
-        const ai = new portAudio.AudioIO(inputOptions);
+            var timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')
+            try {
+                ai.pipe(outputFileStream);
+                ai.start();
+                console.log(`started recording ${uuid}-${rollover}.wav`);
+    
+                await this.sleep(length);
+                ai.quit();
+                console.log("finished recording");
+            } catch (error) {
+                log.error(error)
+                console.error("Error recording audio: " + error);
+            }
+            this.rolloverRecord(uuid,length)
+                var transcribedText =""
+                if(useOpenAI){
+                    transcribedText = await openai.getTextFromSpeech(fileLocation)
+                } else {
+                    transcribedText = await whisper.getTextFromSpeech(fileLocation) 
+                }
+                transcriber.appendTextToLog(timestamp,transcribedText,mic.logname)
 
-        var fileLocation = `./recordings/${uuid}-${rollover}.wav`
-        const outputFileStream = new FileWriter(fileLocation, {
-            sampleRate: foundDevice.defaultSampleRate,
-            channels: 1,
-        });
-
-        var timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')
-
-        try {
-            ai.pipe(outputFileStream);
-            ai.start();
-            console.log(`started recording ${uuid}-${rollover}.wav`);
-
-            await this.sleep(length);
-            ai.quit();
-            console.log("finished recording");
+            return `./${uuid}.wav`;
         } catch (error) {
-            console.error("Error recording audio: " + error);
+            log.error(error)
         }
-        this.rolloverRecord(uuid,length)
+        // try {
+        //     ai.pipe(outputFileStream);
+        //     ai.start();
+        //     console.log(`started recording ${uuid}-${rollover}.wav`);
+
+        //     await this.sleep(length);
+        //     ai.quit();
+        //     console.log("finished recording");
+        // } catch (error) {
+        //     console.error("Error recording audio: " + error);
+        // }
+        // this.rolloverRecord(uuid,length)
         
-        var transcribedText =""
-        if(useOpenAI){
-            transcribedText = await openai.getTextFromSpeech(fileLocation)
-        } else {
-            transcribedText = await whisper.getTextFromSpeech(fileLocation) 
-        }
-        transcriber.appendTextToLog(timestamp,transcribedText,mic.logname)
+        // var transcribedText =""
+        // if(useOpenAI){
+        //     transcribedText = await openai.getTextFromSpeech(fileLocation)
+        // } else {
+        //     transcribedText = await whisper.getTextFromSpeech(fileLocation) 
+        // }
+        // transcriber.appendTextToLog(timestamp,transcribedText,mic.logname)
         return `./${uuid}.wav`;
     }
 

@@ -35,6 +35,11 @@ const createWindow = () => {
 
   })
 
+  app.on('before-quit', () => {
+    audioRecorder.getWhisper().killProcess()
+    whisper.killProcess();
+  });
+
   app.on('window-all-closed', () => {
       app.quit()
   })
@@ -159,4 +164,3 @@ const createWindow = () => {
   async function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
