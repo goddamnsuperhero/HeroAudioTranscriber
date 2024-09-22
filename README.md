@@ -14,6 +14,14 @@ It grabs your system mics, records in chunks, and runs them against OpenAI whisp
 You can then use this log in some other app to do realtime subtitles, have an AI look at your messages and run some commands, etc. <br><br>
 DISCLAIMER: if you use openai whisper instead of a local whisper, it does cost money because it uses openai's api. Your not paying me, your paying openai. as of Sept 2024 its 6 cents per 10 minutes per microphone.
 
+## Running
+### refreshing mics
+I highly recommend reloading your mic list, this will refresh which mics you are using. I often times find that my system changes the order list of the mics im using, which can lead to an error when you press record. By refreshing the list you'll always make sure you are using the correct device.
+### logs
+To check the log for errors %appdata%/heroaudiotranscriber/logs
+### child processes
+If the app crashes, sometimes electron can leave child processes open. Make sure there are no heroaudiotranscribers in your process list in this event. Additionally if you exit with an alt-f4 same kind of thing can happen
+
 ## Settings
 - Recording length: this is how long to record, which will determine how much text per upload.
 - Log Location: this is where your log will store
@@ -22,3 +30,41 @@ DISCLAIMER: if you use openai whisper instead of a local whisper, it does cost m
 - whisper model options: This is the options to run whisper. Whisper is usually "Whisper {audio file} {options}" https://github.com/openai/whisper is where you can find the options.
 
 DISCLAIMER: you need whisper installed to use whisper. Please make sure you have it installed & can run from your command line before using that.
+
+## Running from code
+Install node. I used version 18.16.1 while developing
+Install the dependencies 
+```
+npm install
+```
+Run index.mjs, in vscode i use the following launch script
+```
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Main Process",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
+      "windows": {
+        "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd"
+      },
+      "args" : ["."],
+      "outputCapture": "std"
+    }
+  ]
+}
+```
+
+## Packaging
+To make a local version of the app, run
+```
+npm run pack
+```
+to make an executable to share
+```
+npm run dist
+```
+
