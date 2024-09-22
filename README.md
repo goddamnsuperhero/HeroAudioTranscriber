@@ -32,7 +32,7 @@ If the app crashes, sometimes electron can leave child processes open. Make sure
 DISCLAIMER: you need whisper installed to use whisper. Please make sure you have it installed & can run from your command line before using that.
 
 ## Running from code
-Install node. I used version 18.16.1 while developing
+Install node. I used version 18.16.1 while developing, also tested on v20.17.0 
 Install the dependencies 
 ```
 npm install
