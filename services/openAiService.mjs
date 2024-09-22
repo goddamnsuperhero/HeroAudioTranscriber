@@ -1,15 +1,16 @@
 import openAI from 'openai';
 import fs from 'fs';
 import PermStore from './store.js';
+import log from 'electron-log/main.js';
 
-const permStore = new PermStore({ secret: 'openai' , defaults: {'secretkey': ''}});
 
 class OpenAIService {
   static openai;
+  static permStore;
   constructor() {
-
-  this.openai = new openAI.OpenAI({
-      apiKey: permStore.get('secretkey')
+    this.permStore = new PermStore({ configName: 'openai-preferences', secret: 'openai' , defaults: {'secretkey': ''}});
+    this.openai = new openAI.OpenAI({
+      apiKey: this.permStore.get('secretkey')
       });
   }
 
@@ -26,13 +27,11 @@ class OpenAIService {
 
   // updates openai to use your new key then tests it.
   async regenerateOpenai(key){
-    permStore.set('secretkey',key)
+    this.permStore.set('secretkey',key)
     this.openai= new openAI.OpenAI({
       apiKey: key
       });
-
-    await this.testKey();
-
+    await this.testKey()
   }
   // tests your openai key
   async testKey(){

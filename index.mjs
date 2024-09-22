@@ -6,12 +6,13 @@ import { dirname } from 'path';
 import OpenAIService from "./services/openAiService.mjs"
 import transcribeService from "./services/transcribeService.mjs"
 import WhisperService from "./services/whisperService.mjs"
+import log from 'electron-log/main.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const audioRecorder = new AudioRecorder();
 let openai = new OpenAIService()
 let whisper = new WhisperService()
+const audioRecorder = new AudioRecorder(openai, whisper);
 
 let win;
 const createWindow = () => {
@@ -110,12 +111,11 @@ const createWindow = () => {
         await audioRecorder.setRecordingLength(arg.data.length)
       } else if (arg.name === 'updateApiKey'){
         await openai.regenerateOpenai(arg.data.key).then(() => {
-        event.sender.send('data-response',{name:'goodAPIKey'}); 
-        console.log("success")
+          event.sender.send('data-response',{name:'goodAPIKey'}); 
+          console.log("success")
         }).catch ((error)=> {
           event.sender.send('data-response',{name:'badAPIKey'}); 
           console.log(error)
-
         })
       } else if (arg.name === 'updateLogLocation'){
         var result = await transcribeService.updateLogFileLocation(arg.data.key)

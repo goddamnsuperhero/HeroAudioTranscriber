@@ -1,9 +1,7 @@
 import portAudio from 'naudiodon'
 import {FileWriter} from 'wav';
 import PermStore from './store.js';
-import openAiService from './openAiService.mjs';
 import transcriber from "./transcribeService.mjs"
-import WhisperService from './whisperService.mjs';
 import log from 'electron-log/main.js';
 import fs from 'fs'
 const permStore = new PermStore({ configName: 'user-preferences' , defaults: {'recordingLength': 5000, 'useOpenAI': true}});
@@ -12,13 +10,16 @@ const userMicList = new Map();
 const audioRecorderList = new Map();
 var recordingLength = 5000;
 
-var openai = new openAiService()
-var whisper = new WhisperService()
-
+//var openai = new openAiService()
+//var whisper = new WhisperService()
+var openai;
+var whisper;
 var useOpenAI = false;
 class AudioRecorder {
 
-    constructor() {
+    constructor( openaiservice, whisperservice) {
+        openai = openaiservice
+        whisper = whisperservice
         this.loadMicData();
         if(permStore.has('recordingLength')) recordingLength = permStore.get('recordingLength');
         if(permStore.has('useOpenAI')) useOpenAI = permStore.get('useOpenAI');
