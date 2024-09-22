@@ -5,17 +5,14 @@
   "main": "index.mjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "postinstall": "electron-builder install-app-deps"
   },
   "build": {
-    "appId": "your.id",
+    "appId": "gdsh.heroaudiotranscriber",
     "mac": {
-      "category": "your.app.category.type"
+      "category": "public.app-category.utilities"
     }
   },
   "author": "Goddamn Superhero",
@@ -46,19 +43,11 @@
     "whisper-node": "^1.1.1"
   },
   "devDependencies": {
-    "@electron-forge/cli": "^7.4.0",
-    "@electron-forge/maker-deb": "^7.4.0",
-    "@electron-forge/maker-rpm": "^7.4.0",
-    "@electron-forge/maker-squirrel": "^7.4.0",
-    "@electron-forge/maker-zip": "^7.4.0",
-    "@electron-forge/plugin-auto-unpack-natives": "^7.4.0",
-    "@electron-forge/plugin-fuses": "^7.4.0",
     "@electron/fuses": "^1.8.0",
     "electron": "^31.1.0",
-    "electron-builder": "^24.13.3",
-    "electron-rebuild": "^3.2.9"
+    "electron-builder": "^24.13.3"
   },
-  "overrides":{
+  "overrides": {
     "jsonlint": "npm:@prantlf/jsonlint@^11.6.0"
   }
 }
