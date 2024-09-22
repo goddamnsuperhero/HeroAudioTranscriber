@@ -57,5 +57,8 @@
     "electron": "^31.1.0",
     "electron-builder": "^24.13.3",
     "electron-rebuild": "^3.2.9"
+  },
+  "overrides":{
+    "jsonlint": "npm:@prantlf/jsonlint@^11.6.0"
   }
 }
