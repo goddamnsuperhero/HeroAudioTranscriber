@@ -27,9 +27,9 @@ If the app crashes, sometimes electron can leave child processes open. Make sure
 - Log Location: this is where your log will store
 - Model: use open ai or not
 - Open Ai Secret key: This is the secret key to run the model. https://platform.openai.com/api-keys to find or generate a new one. Please be smart and set spending limmits.
-- whisper model options: This is the options to run whisper. Whisper is usually "Whisper {audio file} {options}" https://github.com/openai/whisper is where you can find the options.
+- whisper model options: This is the options to run whisper. Whisper is usually "Whisper {audio file} {options}" https://github.com/openai/whisper is where you can find the options. I highly recommend using the tiny or tiny.en model's because they are the fastest.
 
-DISCLAIMER: you need whisper installed to use whisper. Please make sure you have it installed & can run from your command line before using that.
+DISCLAIMER: you need whisper installed to use whisper. Please make sure you have it installed & can run from your command line before using that. 
 
 ## Running from code
 Install node. I used version 18.16.1 while developing, also tested on v20.17.0 
